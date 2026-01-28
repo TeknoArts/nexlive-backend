@@ -2,8 +2,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install OpenSSL and other required dependencies for Prisma on Alpine
-RUN apk add --no-cache openssl openssl-dev
+# Install OpenSSL 1.1 compatibility library for Prisma on Alpine
+# Prisma requires libssl.so.1.1 but Alpine uses OpenSSL 3.x
+RUN apk add --no-cache openssl1.1-compat
 
 # Copy package files
 COPY package*.json ./
