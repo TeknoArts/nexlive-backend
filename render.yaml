@@ -3,7 +3,7 @@ services:
     name: nexlive-backend
     env: node
     buildCommand: npm install && npm run build && npm run prisma:generate
-    startCommand: node dist/main.js
+    startCommand: node dist/src/main.js
     envVars:
       - key: DATABASE_URL
         sync: false
