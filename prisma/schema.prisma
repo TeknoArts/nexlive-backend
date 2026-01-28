@@ -1,0 +1,172 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("VIEWER") // VIEWER, PARTNER, ADMIN
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  wallet        Wallet?
+  watchlist     WatchlistItem[]
+  transactions  Transaction[]
+  partner       Partner?
+  auditLogs     AuditLog[]
+}
+
+model Partner {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  description String?
+  streamKey   String   @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  channels Channel[]
+  schedules Schedule[]
+  vodItems  VodItem[]
+}
+
+model Channel {
+  id          String   @id @default(cuid())
+  partnerId   String
+  partner     Partner  @relation(fields: [partnerId], references: [id])
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  name        String
+  description String?
+  streamUrl   String
+  thumbnail   String?
+  isLive      Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  viewers     Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schedules Schedule[]
+}
+
+model Schedule {
+  id          String   @id @default(cuid())
+  channelId   String
+  channel     Channel  @relation(fields: [channelId], references: [id])
+  partnerId   String
+  partner     Partner  @relation(fields: [partnerId], references: [id])
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  image       String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  channels Channel[]
+  vodItems VodItem[]
+}
+
+model VodItem {
+  id          String   @id @default(cuid())
+  partnerId   String?
+  partner     Partner? @relation(fields: [partnerId], references: [id])
+  categoryId String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  title       String
+  description String?
+  videoUrl    String
+  thumbnail   String?
+  duration    Int      // in seconds
+  tags        String?  // JSON array
+  views       Int      @default(0)
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  watchlistItems WatchlistItem[]
+}
+
+model WatchlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  vodItemId String
+  vodItem   VodItem  @relation(fields: [vodItemId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, vodItemId])
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  balance   Float    @default(0)
+  currency  String   @default("USD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  amount      Float
+  type        String   // 'credit', 'debit', 'payment', 'refund'
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model Voucher {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  amount      Float
+  currency    String   @default("USD")
+  isRedeemed  Boolean  @default(false)
+  redeemedBy  String?
+  redeemedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  action      String
+  resource    String
+  resourceId  String?
+  details     String?  // JSON
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+}

@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: nexlive-backend
+    env: node
+    buildCommand: npm install && npm run build && npm run prisma:generate
+    startCommand: node dist/main.js
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        sync: false
